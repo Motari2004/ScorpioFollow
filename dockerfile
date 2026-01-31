@@ -1,64 +1,62 @@
-# =========================
-# Dockerfile for WhatsApp Scheduler Bot
-# =========================
-
-# Use official Python image
+# Use an official Python 3.11 slim image
 FROM python:3.11-slim
 
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# Install system dependencies for Playwright + Chromium + building Python packages
+# Install system dependencies for Playwright and Chromium
+# These are required to run a headless browser in a Linux container
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
-    curl \
-    git \
-    unzip \
-    xvfb \
+    gnupg \
+    libgbm-dev \
     libnss3 \
-    libatk1.0-0 \
+    libnspr4 \
+    libasound2 \
+    libatk-1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
+    libdbus-1-3 \
     libdrm2 \
-    libxkbcommon0 \
+    libexpat1 \
+    libfontconfig1 \
+    libglib2.0-0 \
+    libgtk-3-0 \
+    libpango-1.0-0 \
+    libx11-6 \
+    libxcb1 \
     libxcomposite1 \
     libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
     libxrandr2 \
-    libgbm1 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgtk-3-0 \
-    ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    build-essential \
-    g++ \
-    python3-dev \
-    --no-install-recommends \
-    && apt-get clean \
+    libxrender1 \
+    libxshmfence1 \
+    libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy requirements and install Python packages
+# Copy the requirements file first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
 
-# Install Playwright browsers
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install the Chromium browser via Playwright
+# This puts the browser in the container's internal cache
 RUN playwright install chromium
 
-# Copy application code
+# Copy the rest of your application code
 COPY . .
 
-# Create directories for persistent storage
-RUN mkdir -p whatsapp_sessions scheduled_media
+# Set environment variables
+# PYTHONUNBUFFERED ensures logs are sent to the console immediately
+ENV PYTHONUNBUFFERED=1
+ENV PORT=10000
+ENV RENDER=True
 
-# Expose Flask port
-EXPOSE 5000
+# Expose the port your app runs on
+EXPOSE 10000
 
-# Default command
-CMD ["python", "bot.py"]
+# Start the application using Gunicorn with the eventlet worker
+CMD ["gunicorn", "-k", "eventlet", "-w", "1", "--bind", "0.0.0.0:10000", "app:app"]
