@@ -2,9 +2,10 @@
 # exit on error
 set -o errexit
 
-# Upgrade pip and install requirements
+# Install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Install the browser binary only (no system deps)
+# Force Playwright to install inside the project directory
+export PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers
 playwright install chromium
