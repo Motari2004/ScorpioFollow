@@ -1,58 +1,64 @@
-# Use Python 3.11 slim as the base
+# =========================
+# Dockerfile for WhatsApp Scheduler Bot
+# =========================
+
+# Use official Python image
 FROM python:3.11-slim
 
-# Install system dependencies for Playwright
-RUN apt-get update && apt-get install -y \
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Install system dependencies for Playwright + Chromium + building Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
-    gnupg \
-    libgbm-dev \
+    curl \
+    git \
+    unzip \
+    xvfb \
     libnss3 \
-    libnspr4 \
-    libasound2 \
-    libatk-1.0-0 \
+    libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
-    libdbus-1-3 \
     libdrm2 \
-    libexpat1 \
-    libfontconfig1 \
-    libgaffy \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libpango-1.0-0 \
-    libx11-6 \
-    libxcb1 \
+    libxkbcommon0 \
     libxcomposite1 \
     libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
     libxrandr2 \
-    libxrender1 \
-    libxshmfence1 \
-    libxtst6 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgtk-3-0 \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    build-essential \
+    g++ \
+    python3-dev \
+    --no-install-recommends \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install
+# Copy requirements and install Python packages
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
 # Install Playwright browsers
-# This installs them into the default location INSIDE the container
 RUN playwright install chromium
 
-# Copy the rest of the application
+# Copy application code
 COPY . .
 
-# Set Environment Variables
-ENV PYTHONUNBUFFERED=1
-ENV RENDER=True
+# Create directories for persistent storage
+RUN mkdir -p whatsapp_sessions scheduled_media
 
-# Expose the port Render expects
-EXPOSE 10000
+# Expose Flask port
+EXPOSE 5000
 
-# Start command (matching your eventlet worker)
-CMD ["gunicorn", "-k", "eventlet", "-w", "1", "--bind", "0.0.0.0:10000", "app:app"]
+# Default command
+CMD ["python", "bot.py"]
