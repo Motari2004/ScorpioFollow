@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+# exit on error
 set -o errexit
 
-# Install python dependencies
+# Upgrade pip and install requirements
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Install Playwright browser and system dependencies
+# Install the browser binary only (no system deps)
 playwright install chromium
-playwright install-deps chromium
