@@ -1,5 +1,6 @@
 flask
 flask-socketio
-eventlet
 playwright
-pytest-playwright
+gevent
+gevent-websocket
+gunicorn
