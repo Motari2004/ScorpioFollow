@@ -1,0 +1,9 @@
+# Ignore specific user cookies
+cookies_hopefreymosingi.json
+
+
+# Ignore python cache and environment files
+__pycache__/
+*.pyc
+venv/
+.env
