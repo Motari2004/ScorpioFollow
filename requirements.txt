@@ -1,6 +1,5 @@
 flask
 flask-socketio
 playwright
-gevent
-gevent-websocket
 gunicorn
+eventlet>=0.33.3
